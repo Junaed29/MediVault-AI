@@ -74,7 +74,8 @@ class RAGOrchestrator {
         progress = 0.6
         let systemPrompt = PromptBuilder.systemPrompt()
         let userPrompt = PromptBuilder.userPrompt(context: context, query: userQuery)
-        let result = try await phi4Service.generate(systemPrompt: systemPrompt, userPrompt: userPrompt)
+        let result = try await phi4Service.generate(
+            systemPrompt: systemPrompt, userPrompt: userPrompt)
         let answer = result.answer
 
         currentStep = .validating
@@ -143,6 +144,10 @@ class RAGOrchestrator {
         try await vectorStore.insertBatch(embeddedChunks)
     }
 
+    func fetchStoredDocumentIds() async throws -> [String] {
+        try await vectorStore.fetchAllDocumentIds()
+    }
+
     enum RAGError: LocalizedError {
         case noRelevantDocuments
         case lowConfidenceAnswer
@@ -191,4 +196,3 @@ struct PerformanceMetrics {
     var validationTime: TimeInterval = 0
     var totalTime: TimeInterval = 0
 }
-

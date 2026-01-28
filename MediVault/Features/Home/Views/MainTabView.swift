@@ -99,6 +99,9 @@ struct DocumentsTab: View {
                 .padding([.horizontal, .bottom])
             }
             .navigationTitle("Medical Documents")
+            .task {
+                await loadStoredDocuments()
+            }
             .sheet(isPresented: $showScanner) {
                 DocumentScannerView(
                     orchestrator: orchestrator,
@@ -113,6 +116,17 @@ struct DocumentsTab: View {
                     onDocumentImported: { doc in scannedDocuments.append(doc) }
                 )
             }
+        }
+    }
+
+    private func loadStoredDocuments() async {
+        do {
+            let storedIds = try await orchestrator.fetchStoredDocumentIds()
+            if scannedDocuments.isEmpty && !storedIds.isEmpty {
+                scannedDocuments = storedIds
+            }
+        } catch {
+            print("Failed to load stored documents: \(error)")
         }
     }
 }

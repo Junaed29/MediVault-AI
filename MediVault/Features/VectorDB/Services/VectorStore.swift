@@ -5,7 +5,6 @@
 //  Created by Junaed Chowdhury on 28/1/26.
 //
 
-
 import Foundation
 import GRDB
 
@@ -78,5 +77,14 @@ actor VectorStore {
 
         scoredChunks.sort { $0.score > $1.score }
         return Array(scoredChunks.prefix(limit))
+    }
+
+    func fetchAllDocumentIds() async throws -> [String] {
+        try await dbQueue.read { db in
+            try String.fetchAll(
+                db,
+                sql: "SELECT DISTINCT document_id FROM chunks ORDER BY created_at DESC"
+            )
+        }
     }
 }
