@@ -6,19 +6,27 @@
 //
 
 import SwiftUI
-import GRDB
+
+import SwiftUI
 
 struct ContentView: View {
+    @State private var showScanner = false
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        VStack(spacing: 16) {
+            Button("Scan Document") { showScanner = true }
+                .buttonStyle(.borderedProminent)
         }
-        .padding()
+        .sheet(isPresented: $showScanner) {
+            DocumentScannerView(
+                orchestrator: RAGOrchestrator(),
+                isPresented: $showScanner,
+                onDocumentScanned: { _ in }
+            )
+        }
     }
 }
+
 
 #Preview {
     ContentView()
