@@ -1,5 +1,5 @@
 {
-  "originHash" : "71e3e0e61ec3480fe6e53703fb61a92df7e0af531ef7c04503a8b0b9ca808acc",
+  "originHash" : "0fd564d6b9b7063c1003e6f247b0b19814ff7d1fc313a4db35715fe7b546589e",
   "pins" : [
     {
       "identity" : "grdb.swift",
@@ -26,6 +26,15 @@
       "state" : {
         "revision" : "d81197f35f41445bc10e94600795e68c6f5e94b0",
         "version" : "2.3.1"
+      }
+    },
+    {
+      "identity" : "swift-llama-cpp",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pgorzelany/swift-llama-cpp",
+      "state" : {
+        "revision" : "5496bc7c9820f04bba7268dc8a271235deae436d",
+        "version" : "1.2.0"
       }
     },
     {

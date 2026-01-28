@@ -8,34 +8,26 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var status = "Running DB test..."
+    @State private var status = "Running LLM test..."
 
     var body: some View {
         Text(status)
             .padding()
             .task {
                 do {
-                    let dbURL = FileManager.default
-                        .urls(for: .documentDirectory, in: .userDomainMask)[0]
-                        .appendingPathComponent("test.db")
-
-                    let store = try VectorStore(databaseURL: dbURL)
-                    let chunk = DocumentChunk(
-                        documentId: "test-doc",
-                        chunkIndex: 0,
-                        content: "Glucose: 180 mg/dL",
-                        embedding: Array(repeating: 0.5, count: 384)
+                    let service = Phi4MiniService()
+                    try await service.loadModel()
+                    let reply = try await service.generate(
+                        systemPrompt: PromptBuilder.systemPrompt(),
+                        userPrompt: "Say hello in one sentence."
                     )
-                    try await store.insert(chunk)
-                    let results = try await store.fetchChunks(documentId: "test-doc")
-                    status = "DB OK. Retrieved \(results.count) chunk(s)."
+                    status = "LLM OK: \(reply.answer)"
                 } catch {
-                    status = "DB failed: \(error.localizedDescription)"
+                    status = "LLM failed: \(error.localizedDescription)"
                 }
             }
     }
 }
-
 
 #Preview {
     ContentView()

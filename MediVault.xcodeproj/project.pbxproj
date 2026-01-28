@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		F99E676D2F29241A00C7E439 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = F99E676C2F29241A00C7E439 /* GRDB */; };
 		F99E67C02F29B9ED00C7E439 /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = F99E67BF2F29B9ED00C7E439 /* Tokenizers */; };
+		F99E67F02F29DCFC00C7E439 /* SwiftLlama in Frameworks */ = {isa = PBXBuildFile; productRef = F99E67EF2F29DCFC00C7E439 /* SwiftLlama */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +84,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F99E67C02F29B9ED00C7E439 /* Tokenizers in Frameworks */,
+				F99E67F02F29DCFC00C7E439 /* SwiftLlama in Frameworks */,
 				F99E676D2F29241A00C7E439 /* GRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -146,6 +148,7 @@
 			packageProductDependencies = (
 				F99E676C2F29241A00C7E439 /* GRDB */,
 				F99E67BF2F29B9ED00C7E439 /* Tokenizers */,
+				F99E67EF2F29DCFC00C7E439 /* SwiftLlama */,
 			);
 			productName = MediVault;
 			productReference = F99E673E2F291FC900C7E439 /* MediVault.app */;
@@ -232,6 +235,7 @@
 			packageReferences = (
 				F99E676B2F29241A00C7E439 /* XCRemoteSwiftPackageReference "GRDB" */,
 				F99E67BE2F29B9ED00C7E439 /* XCRemoteSwiftPackageReference "swift-transformers" */,
+				F99E67EE2F29DCFC00C7E439 /* XCRemoteSwiftPackageReference "swift-llama-cpp" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F99E673F2F291FC900C7E439 /* Products */;
@@ -650,6 +654,14 @@
 				minimumVersion = 1.1.6;
 			};
 		};
+		F99E67EE2F29DCFC00C7E439 /* XCRemoteSwiftPackageReference "swift-llama-cpp" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pgorzelany/swift-llama-cpp";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -662,6 +674,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F99E67BE2F29B9ED00C7E439 /* XCRemoteSwiftPackageReference "swift-transformers" */;
 			productName = Tokenizers;
+		};
+		F99E67EF2F29DCFC00C7E439 /* SwiftLlama */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F99E67EE2F29DCFC00C7E439 /* XCRemoteSwiftPackageReference "swift-llama-cpp" */;
+			productName = SwiftLlama;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
