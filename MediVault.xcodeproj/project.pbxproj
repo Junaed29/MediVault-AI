@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		F99E676D2F29241A00C7E439 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = F99E676C2F29241A00C7E439 /* GRDB */; };
+		F99E67C02F29B9ED00C7E439 /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = F99E67BF2F29B9ED00C7E439 /* Tokenizers */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F99E67C02F29B9ED00C7E439 /* Tokenizers in Frameworks */,
 				F99E676D2F29241A00C7E439 /* GRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -131,6 +133,7 @@
 			name = MediVault;
 			packageProductDependencies = (
 				F99E676C2F29241A00C7E439 /* GRDB */,
+				F99E67BF2F29B9ED00C7E439 /* Tokenizers */,
 			);
 			productName = MediVault;
 			productReference = F99E673E2F291FC900C7E439 /* MediVault.app */;
@@ -216,6 +219,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				F99E676B2F29241A00C7E439 /* XCRemoteSwiftPackageReference "GRDB" */,
+				F99E67BE2F29B9ED00C7E439 /* XCRemoteSwiftPackageReference "swift-transformers" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F99E673F2F291FC900C7E439 /* Products */;
@@ -626,6 +630,14 @@
 				minimumVersion = 7.0.0;
 			};
 		};
+		F99E67BE2F29B9ED00C7E439 /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-transformers";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.6;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -633,6 +645,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F99E676B2F29241A00C7E439 /* XCRemoteSwiftPackageReference "GRDB" */;
 			productName = GRDB;
+		};
+		F99E67BF2F29B9ED00C7E439 /* Tokenizers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F99E67BE2F29B9ED00C7E439 /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Tokenizers;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
