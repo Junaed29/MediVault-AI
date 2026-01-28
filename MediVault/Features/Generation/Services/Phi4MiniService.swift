@@ -5,7 +5,6 @@
 //  Created by Junaed Chowdhury on 28/1/26.
 //
 
-
 import Foundation
 import SwiftLlama
 
@@ -16,13 +15,15 @@ struct CitedAnswer: Codable {
 
 actor Phi4MiniService {
     private var llamaService: LlamaService?
-    private let modelBaseName = "Phi-4-mini-instruct-Q4_K_M"
+    private let modelBaseName = "qwen2.5-1.5b-instruct-q4_k_m-00001-of-00001"
 
     func loadModel() async throws {
-        guard let modelUrl = Bundle.main.url(
-            forResource: modelBaseName,
-            withExtension: "gguf"
-        ) else {
+        guard
+            let modelUrl = Bundle.main.url(
+                forResource: modelBaseName,
+                withExtension: "gguf"
+            )
+        else {
             throw Phi4MiniError.modelNotFound
         }
 
@@ -43,7 +44,7 @@ actor Phi4MiniService {
 
         let messages = [
             LlamaChatMessage(role: .system, content: systemPrompt),
-            LlamaChatMessage(role: .user, content: userPrompt)
+            LlamaChatMessage(role: .user, content: userPrompt),
         ]
 
         do {

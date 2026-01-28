@@ -5,7 +5,6 @@
 //  Created by Junaed Chowdhury on 28/1/26.
 //
 
-
 import SwiftUI
 
 struct MainTabView: View {
@@ -133,14 +132,20 @@ struct SettingsTab: View {
                     HStack {
                         Text("Model")
                         Spacer()
-                        Text("Phi-4-mini-instruct")
+                        Text("Qwen2.5-1.5B-Instruct")
                             .foregroundColor(.secondary)
                     }
                 }
 
                 Section("Privacy") {
-                    HStack { Image(systemName: "lock.fill"); Text("100% Offline") }
-                    HStack { Image(systemName: "checkmark.seal.fill"); Text("Local-only processing") }
+                    HStack {
+                        Image(systemName: "lock.fill")
+                        Text("100% Offline")
+                    }
+                    HStack {
+                        Image(systemName: "checkmark.seal.fill")
+                        Text("Local-only processing")
+                    }
                 }
             }
             .navigationTitle("Settings")
