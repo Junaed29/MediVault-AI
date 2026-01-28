@@ -36,7 +36,7 @@ struct GroundingValidator {
 
         let groundingRatio = Float(groundedCount) / Float(max(claims.count, 1))
         let avgConfidence = totalConfidence / Float(max(claims.count, 1))
-        let isGrounded = groundingRatio >= 0.8
+        let isGrounded = groundingRatio >= 0.5  // Lowered from 0.8 for OCR tolerance
         let hasDangerousContent = containsDangerousAdvice(answer)
 
         return GroundingResult(
@@ -76,7 +76,7 @@ struct GroundingValidator {
         }
 
         let coverage = Float(foundCount) / Float(keyTerms.count)
-        let isGrounded = coverage >= 0.6
+        let isGrounded = coverage >= 0.4  // Lowered from 0.6 for OCR tolerance
 
         return ClaimValidationResult(
             isGrounded: isGrounded,
