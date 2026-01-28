@@ -5,16 +5,16 @@
 //  Created by Junaed Chowdhury on 28/1/26.
 //
 
-
 import SwiftUI
 
 struct ChatView: View {
     @State private var viewModel: ChatViewModel
     @State private var userInput = ""
     @State private var showSources = false
+    @FocusState private var isTextFieldFocused: Bool
 
     init(viewModel: ChatViewModel) {
-            _viewModel = State(initialValue: viewModel)
+        _viewModel = State(initialValue: viewModel)
     }
 
     var body: some View {
@@ -37,6 +37,9 @@ struct ChatView: View {
                         }
                         .padding()
                     }
+                    .onTapGesture {
+                        isTextFieldFocused = false
+                    }
                     .onChange(of: viewModel.messages.count) { _, _ in
                         if let lastMessage = viewModel.messages.last {
                             withAnimation {
@@ -49,12 +52,15 @@ struct ChatView: View {
                 Divider()
 
                 HStack(spacing: 12) {
-                    TextField("Ask about your medical history...", text: $userInput, axis: .vertical)
-                        .textFieldStyle(.roundedBorder)
-                        .lineLimit(1...5)
-                        .submitLabel(.send)
-                        .onSubmit { sendMessage() }
-                        .disabled(viewModel.isProcessing)
+                    TextField(
+                        "Ask about your medical history...", text: $userInput, axis: .vertical
+                    )
+                    .textFieldStyle(.roundedBorder)
+                    .lineLimit(1...5)
+                    .submitLabel(.send)
+                    .onSubmit { sendMessage() }
+                    .disabled(viewModel.isProcessing)
+                    .focused($isTextFieldFocused)
 
                     Button(action: sendMessage) {
                         Image(systemName: "arrow.up.circle.fill")
