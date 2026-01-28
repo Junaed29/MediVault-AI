@@ -95,6 +95,68 @@ class RAGOrchestrator {
         )
     }
 
+    /// Query with conversation history for multi-turn conversations
+    func queryWithHistory(
+        _ userQuery: String,
+        conversationHistory: [(role: String, content: String)]
+    ) async throws -> RAGResponse {
+        isProcessing = true
+        errorMessage = nil
+        defer {
+            isProcessing = false
+            currentStep = .idle
+        }
+
+        currentStep = .embedding
+        progress = 0.2
+        let queryEmbedding = try await embeddingService.embed(text: userQuery)
+
+        currentStep = .retrieving
+        progress = 0.4
+        let retrieved = try await vectorStore.findSimilar(
+            queryEmbedding: queryEmbedding,
+            limit: 3,
+            threshold: 0.5
+        )
+
+        guard !retrieved.isEmpty else {
+            throw RAGError.noRelevantDocuments
+        }
+
+        let chunks = retrieved.map { $0.chunk }
+        let scores = retrieved.map { $0.score }
+        let context = buildContext(from: chunks)
+
+        currentStep = .generating
+        progress = 0.6
+        let systemPrompt = PromptBuilder.systemPrompt()
+        let userPrompt = PromptBuilder.userPrompt(context: context, query: userQuery)
+
+        // Use history-aware generation
+        let result = try await phi4Service.generateWithHistory(
+            systemPrompt: systemPrompt,
+            conversationHistory: conversationHistory,
+            currentUserPrompt: userPrompt
+        )
+        let answer = result.answer
+
+        currentStep = .validating
+        progress = 0.9
+        let groundingResult = groundingValidator.validate(answer: answer, context: context)
+
+        currentStep = .complete
+        progress = 1.0
+
+        return RAGResponse(
+            answer: answer,
+            sources: chunks,
+            scores: scores,
+            citedSourceIndices: result.sources,
+            groundingResult: groundingResult,
+            metrics: PerformanceMetrics()
+        )
+    }
+
     private func buildContext(from chunks: [DocumentChunk]) -> String {
         var context = ""
         for (index, chunk) in chunks.enumerated() {

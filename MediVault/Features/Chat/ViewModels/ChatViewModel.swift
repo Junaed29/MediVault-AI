@@ -62,7 +62,19 @@ class ChatViewModel {
         }
 
         do {
-            let response = try await orchestrator.query(query)
+            // Build conversation history from previous messages (exclude welcome and current)
+            let conversationHistory = buildConversationHistory()
+
+            let response: RAGResponse
+            if conversationHistory.isEmpty {
+                // First question - use simple query
+                response = try await orchestrator.query(query)
+            } else {
+                // Follow-up question - use history-aware query
+                response = try await orchestrator.queryWithHistory(
+                    query, conversationHistory: conversationHistory)
+            }
+
             lastResponse = response
             let filtered = SafetyFilter.filter(response)
             addAssistantMessage(
@@ -73,6 +85,21 @@ class ChatViewModel {
         } catch {
             addErrorMessage(error.localizedDescription)
         }
+    }
+
+    /// Build conversation history from chat messages (excluding system messages)
+    private func buildConversationHistory() -> [(role: String, content: String)] {
+        var history: [(role: String, content: String)] = []
+
+        // Skip first message (welcome) and last message (current user query)
+        let relevantMessages = messages.dropFirst().dropLast()
+
+        for message in relevantMessages {
+            let role = message.isUser ? "user" : "assistant"
+            history.append((role: role, content: message.content))
+        }
+
+        return history
     }
 
     private func isGreetingOrSimpleInput(_ text: String) -> Bool {

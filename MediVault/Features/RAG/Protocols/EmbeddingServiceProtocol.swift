@@ -27,6 +27,11 @@ protocol VectorStoreProtocol {
 
 protocol Phi4MiniServiceProtocol {
     func generate(systemPrompt: String, userPrompt: String) async throws -> CitedAnswer
+    func generateWithHistory(
+        systemPrompt: String,
+        conversationHistory: [(role: String, content: String)],
+        currentUserPrompt: String
+    ) async throws -> CitedAnswer
 }
 
 extension EmbeddingService: EmbeddingServiceProtocol {}

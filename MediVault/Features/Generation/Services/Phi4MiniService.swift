@@ -57,6 +57,38 @@ actor Phi4MiniService {
         }
     }
 
+    /// Generate with conversation history for multi-turn conversations
+    func generateWithHistory(
+        systemPrompt: String,
+        conversationHistory: [(role: String, content: String)],
+        currentUserPrompt: String
+    ) async throws -> CitedAnswer {
+        guard let llamaService else { throw Phi4MiniError.modelNotLoaded }
+        guard !systemPrompt.isEmpty else { throw Phi4MiniError.emptyPrompt }
+        guard !currentUserPrompt.isEmpty else { throw Phi4MiniError.emptyPrompt }
+
+        var messages = [LlamaChatMessage(role: .system, content: systemPrompt)]
+
+        // Add conversation history (last 4 exchanges to stay within context limit)
+        let recentHistory = conversationHistory.suffix(8)  // 4 user + 4 assistant messages
+        for entry in recentHistory {
+            let role: LlamaChatMessage.Role = entry.role == "user" ? .user : .assistant
+            messages.append(LlamaChatMessage(role: role, content: entry.content))
+        }
+
+        // Add current user prompt
+        messages.append(LlamaChatMessage(role: .user, content: currentUserPrompt))
+
+        do {
+            return try await llamaService.respond(
+                to: messages,
+                generating: CitedAnswer.self
+            )
+        } catch {
+            throw Phi4MiniError.generationFailed(error.localizedDescription)
+        }
+    }
+
     enum Phi4MiniError: LocalizedError {
         case modelNotLoaded
         case modelNotFound
