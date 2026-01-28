@@ -39,16 +39,28 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Resources/Models/float16_model.mlpackage,
 			);
 			target = F99E673D2F291FC900C7E439 /* MediVault */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		F99E67CB2F29C73C00C7E439 /* Exceptions for "MediVault" folder in "Copy Bundle Resources" phase from "MediVault" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = F99E673C2F291FC900C7E439 /* Resources */;
+			membershipExceptions = (
+				Resources/Models/float16_model.mlpackage,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F99E67402F291FC900C7E439 /* MediVault */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				F99E676A2F29220F00C7E439 /* Exceptions for "MediVault" folder in "MediVault" target */,
+				F99E67CB2F29C73C00C7E439 /* Exceptions for "MediVault" folder in "Copy Bundle Resources" phase from "MediVault" target */,
 			);
 			path = MediVault;
 			sourceTree = "<group>";

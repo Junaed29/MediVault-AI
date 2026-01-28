@@ -7,23 +7,22 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct ContentView: View {
-    @State private var showScanner = false
+    @State private var status = "Running embedding test..."
 
     var body: some View {
-        VStack(spacing: 16) {
-            Button("Scan Document") { showScanner = true }
-                .buttonStyle(.borderedProminent)
-        }
-        .sheet(isPresented: $showScanner) {
-            DocumentScannerView(
-                orchestrator: RAGOrchestrator(),
-                isPresented: $showScanner,
-                onDocumentScanned: { _ in }
-            )
-        }
+        Text(status)
+            .padding()
+            .task {
+                do {
+                    let service = EmbeddingService()
+                    try await service.loadModel()
+                    let vec = try await service.embed(text: "Glucose 180 mg/dL")
+                    status = "Embedding OK. Length = \(vec.count)"
+                } catch {
+                    status = "Embedding failed: \(error.localizedDescription)"
+                }
+            }
     }
 }
 
