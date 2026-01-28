@@ -5,7 +5,6 @@
 //  Created by Junaed Chowdhury on 28/1/26.
 //
 
-
 import Foundation
 
 struct GroundingValidator {
@@ -13,6 +12,21 @@ struct GroundingValidator {
         let claims = extractClaims(from: answer)
         var groundedCount = 0
         var totalConfidence: Float = 0.0
+
+        // Handle short/direct answers that don't extract as claims
+        if claims.isEmpty {
+            // For short answers, check if key terms exist in context
+            let directValidation = validateClaim(claim: answer, context: context)
+            let hasDangerousContent = containsDangerousAdvice(answer)
+
+            return GroundingResult(
+                isGrounded: directValidation.isGrounded && !hasDangerousContent,
+                confidence: directValidation.confidence,
+                groundedClaims: directValidation.isGrounded ? 1 : 0,
+                totalClaims: 1,
+                hasDangerousContent: hasDangerousContent
+            )
+        }
 
         for claim in claims {
             let result = validateClaim(claim: claim, context: context)
@@ -77,9 +91,9 @@ struct GroundingValidator {
 
         for word in words {
             let cleaned = word.trimmingCharacters(in: .punctuationCharacters)
-            if cleaned.count > 4 ||
-                cleaned.contains(where: { $0.isNumber }) ||
-                isMedicalUnit(cleaned) {
+            if cleaned.count > 4 || cleaned.contains(where: { $0.isNumber })
+                || isMedicalUnit(cleaned)
+            {
                 keyTerms.append(cleaned.lowercased())
             }
         }
@@ -111,7 +125,7 @@ struct GroundingValidator {
             "immediately start",
             "ignore your doctor",
             "doctor is wrong",
-            "don't listen to"
+            "don't listen to",
         ]
 
         return dangerousPatterns.contains { lowercased.contains($0) }
