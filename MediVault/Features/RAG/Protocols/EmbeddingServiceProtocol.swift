@@ -19,6 +19,10 @@ protocol VectorStoreProtocol {
     func insertBatch(_ chunks: [DocumentChunk]) async throws
 
     func fetchAllDocumentIds() async throws -> [String]
+
+    func fetchDocumentContent(documentId: String) async throws -> String
+
+    func deleteDocument(documentId: String) async throws
 }
 
 protocol Phi4MiniServiceProtocol {

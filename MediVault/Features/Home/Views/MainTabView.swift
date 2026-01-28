@@ -70,11 +70,20 @@ struct DocumentsTab: View {
                 } else {
                     List {
                         ForEach(scannedDocuments, id: \.self) { doc in
-                            HStack {
-                                Image(systemName: "doc.text")
-                                Text(doc)
+                            NavigationLink(
+                                destination: DocumentDetailView(
+                                    documentId: doc,
+                                    orchestrator: orchestrator
+                                )
+                            ) {
+                                HStack {
+                                    Image(systemName: "doc.text")
+                                    Text(doc)
+                                        .lineLimit(1)
+                                }
                             }
                         }
+                        .onDelete(perform: deleteDocuments)
                     }
                 }
 
@@ -127,6 +136,56 @@ struct DocumentsTab: View {
             }
         } catch {
             print("Failed to load stored documents: \(error)")
+        }
+    }
+
+    private func deleteDocuments(at offsets: IndexSet) {
+        for index in offsets {
+            let documentId = scannedDocuments[index]
+            Task {
+                do {
+                    try await orchestrator.deleteDocument(documentId: documentId)
+                } catch {
+                    print("Failed to delete document: \(error)")
+                }
+            }
+        }
+        scannedDocuments.remove(atOffsets: offsets)
+    }
+}
+
+struct DocumentDetailView: View {
+    let documentId: String
+    let orchestrator: RAGOrchestrator
+    @State private var content: String = ""
+    @State private var isLoading = true
+
+    var body: some View {
+        ScrollView {
+            if isLoading {
+                ProgressView("Loading document...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.top, 100)
+            } else {
+                Text(content)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .navigationTitle("Document")
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await loadContent()
+        }
+    }
+
+    private func loadContent() async {
+        do {
+            content = try await orchestrator.fetchDocumentContent(documentId: documentId)
+            isLoading = false
+        } catch {
+            content = "Failed to load document: \(error.localizedDescription)"
+            isLoading = false
         }
     }
 }

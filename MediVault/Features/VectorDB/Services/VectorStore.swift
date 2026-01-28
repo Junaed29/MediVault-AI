@@ -87,4 +87,22 @@ actor VectorStore {
             )
         }
     }
+
+    func fetchDocumentContent(documentId: String) async throws -> String {
+        let chunks = try await dbQueue.read { db in
+            try DocumentChunk
+                .filter(DocumentChunk.Columns.documentId == documentId)
+                .order(DocumentChunk.Columns.chunkIndex.asc)
+                .fetchAll(db)
+        }
+        return chunks.map { $0.content }.joined(separator: "\n\n")
+    }
+
+    func deleteDocument(documentId: String) async throws {
+        try await dbQueue.write { db in
+            try DocumentChunk
+                .filter(DocumentChunk.Columns.documentId == documentId)
+                .deleteAll(db)
+        }
+    }
 }

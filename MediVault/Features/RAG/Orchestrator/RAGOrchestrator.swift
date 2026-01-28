@@ -148,6 +148,14 @@ class RAGOrchestrator {
         try await vectorStore.fetchAllDocumentIds()
     }
 
+    func fetchDocumentContent(documentId: String) async throws -> String {
+        try await vectorStore.fetchDocumentContent(documentId: documentId)
+    }
+
+    func deleteDocument(documentId: String) async throws {
+        try await vectorStore.deleteDocument(documentId: documentId)
+    }
+
     enum RAGError: LocalizedError {
         case noRelevantDocuments
         case lowConfidenceAnswer
