@@ -45,55 +45,199 @@
 
 **User asks:** *"What was my last medical report about?"*
 
-### Step 1: Safety Check
-```
-SafetyFilter.isSensitive("What was my last medical report about?")
-→ false (safe to proceed)
-```
-
-### Step 2: Embed the Query
-```
-EmbeddingService.embed("What was my last medical report about?")
+### Step 1: Embed the Query
+```swift
+// RAGOrchestrator.swift line 55
+let queryEmbedding = try await embeddingService.embed(text: userQuery)
 → [0.023, -0.156, 0.089, ...] (384 floats)
 ```
 
-### Step 3: Retrieve Similar Chunks
-```
-VectorStore.findSimilar(queryEmbedding, limit: 3, threshold: 0.5)
+### Step 2: Retrieve Similar Chunks
+```swift
+// RAGOrchestrator.swift line 59
+let retrieved = try await vectorStore.findSimilar(
+    queryEmbedding: queryEmbedding,
+    limit: 3,
+    threshold: 0.5
+)
 → Returns top 3 matching chunks:
   1. "Blood test results: Hemoglobin 14.2..." (score: 0.87)
   2. "Doctor notes: Patient shows improvement..." (score: 0.72)
   3. "Prescription: Continue current medication..." (score: 0.65)
 ```
 
-### Step 4: Build Prompt
-```
-PromptBuilder creates:
-  System: "You are a medical assistant. Answer based ONLY on the provided context..."
-  User: "Context: [3 chunks above]\n\nQuestion: What was my last medical report about?"
+### Step 3: Build Prompt
+```swift
+// RAGOrchestrator.swift line 75-76
+let systemPrompt = PromptBuilder.systemPrompt()
+let userPrompt = PromptBuilder.userPrompt(context: context, query: userQuery)
+→ System: "You are a medical assistant. Answer based ONLY on the provided context..."
+→ User: "Context: [3 chunks above]\n\nQuestion: What was my last medical report about?"
 ```
 
-### Step 5: LLM Generation
-```
-Phi4MiniService.generate(systemPrompt, userPrompt)
+### Step 4: LLM Generation
+```swift
+// RAGOrchestrator.swift line 77-79
+let result = try await phi4Service.generate(
+    systemPrompt: systemPrompt, userPrompt: userPrompt
+)
 → CitedAnswer {
     answer: "Your last medical report was a blood test showing hemoglobin at 14.2...",
-    sources: [0, 1]  // References to chunks
+    sources: [0, 1]
 }
 ```
 
-### Step 6: Grounding Validation
+### Step 5: Grounding Validation (AFTER LLM)
+
+The `GroundingValidator` checks if the LLM's answer is actually supported by the source documents:
+
+```swift
+// RAGOrchestrator.swift line 83
+let groundingResult = groundingValidator.validate(answer: answer, context: context)
 ```
-GroundingValidator.validate(answer, sources)
-→ Confirms answer content exists in cited sources
-→ Returns validated RAGResponse
+
+#### How `isGrounded` is Determined
+
+Uses **claim-by-claim verification**:
+
+```swift
+// GroundingValidator.swift
+func validate(answer: String, context: String) -> GroundingResult {
+    let claims = extractClaims(from: answer)  // Split into sentences
+    
+    for claim in claims {
+        let keyTerms = extractKeyTerms(from: claim)  // Words > 4 chars, numbers, units
+        
+        var foundCount = 0
+        for term in keyTerms {
+            if context.contains(term) { foundCount += 1 }
+        }
+        
+        let coverage = foundCount / keyTerms.count
+        if coverage >= 0.6 { groundedCount += 1 }  // ≥60% terms found → grounded
+    }
+    
+    let groundingRatio = groundedCount / totalClaims
+    let isGrounded = groundingRatio >= 0.8  // ≥80% claims grounded → answer is grounded
+}
 ```
+
+**Example:**
+```
+Answer: "Your hemoglobin was 14.2 mg/dL on January 15th"
+Key Terms: ["hemoglobin", "14.2", "mg/dL", "january"]
+Context: "Blood test Jan 15: Hemoglobin 14.2 mg/dL..."
+Found: 4/4 terms → 100% coverage → claim grounded ✓
+```
+
+#### How `hasDangerousContent` is Determined
+
+Checks for **dangerous phrase patterns** that indicate medical advice:
+
+```swift
+// GroundingValidator.swift
+private func containsDangerousAdvice(_ text: String) -> Bool {
+    let dangerousPatterns = [
+        // Diagnosing
+        "you have", "you are diagnosed", "this indicates", "this means you have",
+        // Prescribing
+        "you should take", "start taking", "stop taking", "discontinue",
+        // Dosage advice
+        "increase your dose", "decrease your dose",
+        // Imperative medical advice
+        "you must", "you need to", "immediately start",
+        // Contradicting professionals
+        "ignore your doctor", "doctor is wrong", "don't listen to"
+    ]
+    
+    return dangerousPatterns.contains { text.lowercased().contains($0) }
+}
+```
+
+**Examples:**
+```
+Safe ✓: "Your blood pressure was 120/80 according to the document"
+→ hasDangerousContent = false
+
+Blocked 🚫: "You should stop taking your medication"
+→ contains "stop taking" → hasDangerousContent = true
+
+Blocked 🚫: "This indicates you have diabetes"
+→ contains "this indicates" → hasDangerousContent = true
+```
+
+#### GroundingResult Summary
+
+| Field | Threshold | Meaning |
+|-------|-----------|---------|
+| `isGrounded` | ≥60% per claim, ≥80% of claims | Answer is supported by documents |
+| `hasDangerousContent` | Any pattern match | LLM gave medical advice |
+
+### Step 6: SafetyFilter (AFTER Response is Built)
+
+The SafetyFilter applies a **decision tree** to determine how to display the response:
+
+```swift
+// SafetyFilter.swift
+static func filter(_ response: RAGResponse) -> FilteredResponse {
+    // Check 1: Is the answer grounded in source documents?
+    if !response.groundingResult.isGrounded {
+        return .ungrounded(response)  // ⚠️ Show with warning
+    }
+    
+    // Check 2: Does it contain dangerous medical advice?
+    if response.groundingResult.hasDangerousContent {
+        return .unsafe  // 🚫 Block completely
+    }
+    
+    // Check 3: Is the retrieval confidence high enough?
+    if response.averageScore < 0.4 {
+        return .lowConfidence(response)  // ⚠️ Show with warning
+    }
+    
+    // All checks passed
+    return .safe(response)  // ✅ Show normally
+}
+```
+
+**Decision Flow:**
+```
+                    ┌─────────────────────┐
+                    │  RAGResponse input  │
+                    └──────────┬──────────┘
+                               ▼
+                    ┌─────────────────────┐
+                    │   isGrounded?       │
+                    └──────────┬──────────┘
+                         NO ↙     ↘ YES
+                   ┌──────────┐    ▼
+                   │.ungrounded│   ┌─────────────────────┐
+                   └──────────┘   │ hasDangerousContent?│
+                                  └──────────┬──────────┘
+                                       YES ↙     ↘ NO
+                                 ┌──────────┐    ▼
+                                 │  .unsafe │   ┌─────────────────────┐
+                                 └──────────┘   │ averageScore > 0.4? │
+                                                └──────────┬──────────┘
+                                                     NO ↙     ↘ YES
+                                             ┌───────────────┐ ┌───────┐
+                                             │.lowConfidence │ │ .safe │
+                                             └───────────────┘ └───────┘
+```
+
+**What User Sees for Each Case:**
+| Result | User Message |
+|--------|--------------|
+| `.safe` | *"Your blood pressure was 120/80..."* |
+| `.ungrounded` | *"⚠️ Unverified information. Generated answer: ..."* |
+| `.unsafe` | *"🚫 Safety intervention. Cannot provide medical advice."* |
+| `.lowConfidence` | *"⚠️ Low confidence answer. Possible answer: ..."* |
 
 ### Step 7: Display to User
 ```
-ChatViewModel receives RAGResponse
-→ Adds assistant message to UI
-→ User sees answer with "View Sources" option
+ChatViewModel receives FilteredResponse
+→ .safe case: Shows answer directly
+→ User sees: "Your last medical report was a blood test showing hemoglobin at 14.2..."
 ```
 
 ---
