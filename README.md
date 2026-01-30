@@ -108,12 +108,12 @@ graph LR
 
 2. **Download the LLM model** (~986MB)
    ```bash
-   mkdir -p Resources/Models
+   mkdir -p MediVault/Resources/Models
    
    hf download \
      enacimie/Qwen2.5-1.5B-Instruct-Q4_K_M-GGUF \
      "qwen2.5-1.5b-instruct-q4_k_m-00001-of-00001.gguf" \
-     --local-dir Resources/Models/
+     --local-dir MediVault/Resources/Models/
    ```
    
    > 💡 **Tip:** Install Hugging Face CLI with `pip install huggingface_hub`
@@ -211,6 +211,8 @@ MediVault is designed with **privacy as the foundational principle**:
 - **Context:** 4096 tokens
 - **Batch Size:** 256
 - **Output:** Structured JSON with citations
+
+> 💡 **Model Evolution:** Initially developed with **Phi-3 Mini 3.8B (4-bit)**, later migrated to **Qwen 2.5-1.5B** for improved performance on medical terminology and better structured JSON output compliance.
 
 ### Vector Search
 - **Algorithm:** Brute-force cosine similarity (optimized with Accelerate)
