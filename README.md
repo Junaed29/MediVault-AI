@@ -95,7 +95,7 @@ graph LR
 
 - **Xcode 26.2+**
 - **iOS 26.2+ device** (iPhone only, simulator not recommended due to ML models)
-- **~2GB storage** for models
+- **~1GB storage** for models
 - **Hugging Face CLI** for model download
 
 ### Installation
