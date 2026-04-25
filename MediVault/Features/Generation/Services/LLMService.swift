@@ -1,5 +1,5 @@
 //
-//  Phi4MiniService.swift
+//  LLMService.swift
 //  MediVault
 //
 //  Created by Junaed Chowdhury on 28/1/26.
@@ -14,7 +14,7 @@ struct CitedAnswer: Codable {
     let sources: [Int]
 }
 
-actor Phi4MiniService {
+actor LLMService {
     private var llamaService: LlamaService?
     private let modelBaseName = "qwen2.5-1.5b-instruct-q4_k_m-00001-of-00001"
 
@@ -37,7 +37,7 @@ actor Phi4MiniService {
                 withExtension: "gguf"
             )
         else {
-            throw Phi4MiniError.modelNotFound
+            throw LLMError.modelNotFound
         }
 
         llamaService = LlamaService(
@@ -51,9 +51,9 @@ actor Phi4MiniService {
     }
 
     func generate(systemPrompt: String, userPrompt: String) async throws -> CitedAnswer {
-        guard let llamaService else { throw Phi4MiniError.modelNotLoaded }
-        guard !systemPrompt.isEmpty else { throw Phi4MiniError.emptyPrompt }
-        guard !userPrompt.isEmpty else { throw Phi4MiniError.emptyPrompt }
+        guard let llamaService else { throw LLMError.modelNotLoaded }
+        guard !systemPrompt.isEmpty else { throw LLMError.emptyPrompt }
+        guard !userPrompt.isEmpty else { throw LLMError.emptyPrompt }
 
         let messages = [
             LlamaChatMessage(role: .system, content: systemPrompt),
@@ -66,7 +66,7 @@ actor Phi4MiniService {
                 generating: CitedAnswer.self
             )
         } catch {
-            throw Phi4MiniError.generationFailed(error.localizedDescription)
+            throw LLMError.generationFailed(error.localizedDescription)
         }
     }
 
@@ -76,20 +76,19 @@ actor Phi4MiniService {
         conversationHistory: [(role: String, content: String)],
         currentUserPrompt: String
     ) async throws -> CitedAnswer {
-        guard let llamaService else { throw Phi4MiniError.modelNotLoaded }
-        guard !systemPrompt.isEmpty else { throw Phi4MiniError.emptyPrompt }
-        guard !currentUserPrompt.isEmpty else { throw Phi4MiniError.emptyPrompt }
+        guard let llamaService else { throw LLMError.modelNotLoaded }
+        guard !systemPrompt.isEmpty else { throw LLMError.emptyPrompt }
+        guard !currentUserPrompt.isEmpty else { throw LLMError.emptyPrompt }
 
         var messages = [LlamaChatMessage(role: .system, content: systemPrompt)]
 
-        // Add conversation history (last 4 exchanges to stay within context limit)
-        let recentHistory = conversationHistory.suffix(8)  // 4 user + 4 assistant messages
+        // Last 4 exchanges to stay within context limit
+        let recentHistory = conversationHistory.suffix(8)
         for entry in recentHistory {
             let role: LlamaChatMessage.Role = entry.role == "user" ? .user : .assistant
             messages.append(LlamaChatMessage(role: role, content: entry.content))
         }
 
-        // Add current user prompt
         messages.append(LlamaChatMessage(role: .user, content: currentUserPrompt))
 
         do {
@@ -98,7 +97,7 @@ actor Phi4MiniService {
                 generating: CitedAnswer.self
             )
         } catch {
-            throw Phi4MiniError.generationFailed(error.localizedDescription)
+            throw LLMError.generationFailed(error.localizedDescription)
         }
     }
 
@@ -110,7 +109,7 @@ actor Phi4MiniService {
         systemPrompt: String,
         userPrompt: String
     ) async throws -> BenchmarkResult {
-        guard let llamaService else { throw Phi4MiniError.modelNotLoaded }
+        guard let llamaService else { throw LLMError.modelNotLoaded }
 
         let messages = [
             LlamaChatMessage(role: .system, content: systemPrompt),
@@ -178,7 +177,7 @@ actor Phi4MiniService {
         return results
     }
 
-    enum Phi4MiniError: LocalizedError {
+    enum LLMError: LocalizedError {
         case modelNotLoaded
         case modelNotFound
         case emptyPrompt
@@ -187,9 +186,9 @@ actor Phi4MiniService {
         var errorDescription: String? {
             switch self {
             case .modelNotLoaded:
-                return "Phi-4-mini-instruct model must be loaded before use."
+                return "LLM must be loaded before use."
             case .modelNotFound:
-                return "Phi-4-mini-instruct model not found in bundle."
+                return "LLM model file not found in bundle."
             case .emptyPrompt:
                 return "Cannot generate from empty prompt."
             case .generationFailed(let reason):

@@ -40,13 +40,13 @@ struct MediVaultApp: App {
             let dbURL = documentsURL.appendingPathComponent("medivault.db")
             let vectorStore = try VectorStore(databaseURL: dbURL)
 
-            let phi4Service = Phi4MiniService()
-            try await phi4Service.loadModel()
+            let llmService = LLMService()
+            try await llmService.loadModel()
 
             orchestrator = RAGOrchestrator(
                 embeddingService: embeddingService,
                 vectorStore: vectorStore,
-                phi4Service: phi4Service
+                llmService: llmService
             )
             isInitializing = false
         } catch {

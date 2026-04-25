@@ -14,7 +14,7 @@ import UIKit
 class RAGOrchestrator {
     private let embeddingService: EmbeddingServiceProtocol
     private let vectorStore: VectorStoreProtocol
-    private let phi4Service: Phi4MiniServiceProtocol
+    private let llmService: LLMServiceProtocol
     private let groundingValidator: GroundingValidator
 
     var isProcessing = false
@@ -34,11 +34,11 @@ class RAGOrchestrator {
     init(
         embeddingService: EmbeddingServiceProtocol,
         vectorStore: VectorStoreProtocol,
-        phi4Service: Phi4MiniServiceProtocol
+        llmService: LLMServiceProtocol
     ) {
         self.embeddingService = embeddingService
         self.vectorStore = vectorStore
-        self.phi4Service = phi4Service
+        self.llmService = llmService
         self.groundingValidator = GroundingValidator()
     }
 
@@ -74,7 +74,7 @@ class RAGOrchestrator {
         progress = 0.6
         let systemPrompt = PromptBuilder.systemPrompt()
         let userPrompt = PromptBuilder.userPrompt(context: context, query: userQuery)
-        let result = try await phi4Service.generate(
+        let result = try await llmService.generate(
             systemPrompt: systemPrompt, userPrompt: userPrompt)
         let answer = result.answer
 
@@ -133,7 +133,7 @@ class RAGOrchestrator {
         let userPrompt = PromptBuilder.userPrompt(context: context, query: userQuery)
 
         // Use history-aware generation
-        let result = try await phi4Service.generateWithHistory(
+        let result = try await llmService.generateWithHistory(
             systemPrompt: systemPrompt,
             conversationHistory: conversationHistory,
             currentUserPrompt: userPrompt

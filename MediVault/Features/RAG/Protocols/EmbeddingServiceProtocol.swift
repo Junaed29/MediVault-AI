@@ -25,7 +25,7 @@ protocol VectorStoreProtocol {
     func deleteDocument(documentId: String) async throws
 }
 
-protocol Phi4MiniServiceProtocol {
+protocol LLMServiceProtocol {
     func generate(systemPrompt: String, userPrompt: String) async throws -> CitedAnswer
     func generateWithHistory(
         systemPrompt: String,
@@ -36,4 +36,4 @@ protocol Phi4MiniServiceProtocol {
 
 extension EmbeddingService: EmbeddingServiceProtocol {}
 extension VectorStore: VectorStoreProtocol {}
-extension Phi4MiniService: Phi4MiniServiceProtocol {}
+extension LLMService: LLMServiceProtocol {}

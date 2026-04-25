@@ -233,7 +233,7 @@ struct SettingsTab: View {
 }
 
 struct BenchmarkView: View {
-    @State private var results: [Phi4MiniService.BenchmarkResult] = []
+    @State private var results: [LLMService.BenchmarkResult] = []
     @State private var isRunning = false
     @State private var median: Double = 0
     @State private var exportPath: String?
@@ -285,7 +285,7 @@ struct BenchmarkView: View {
         isRunning = true
         defer { isRunning = false }
         do {
-            let service = Phi4MiniService()
+            let service = LLMService()
             try await service.loadModel()
             let r = try await service.benchmarkSuite()
             results = r
