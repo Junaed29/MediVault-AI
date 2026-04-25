@@ -10,27 +10,42 @@ import XCTest
 
 final class MediVaultTests: XCTestCase {
 
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+    // MARK: - VectorMath.cosineSimilarity
+
+    func testCosineSimilarity_identicalVectors_returnsOne() {
+        let v: [Float] = [1, 2, 3, 4]
+        XCTAssertEqual(VectorMath.cosineSimilarity(v, v), 1.0, accuracy: 1e-6)
     }
 
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    func testCosineSimilarity_orthogonalVectors_returnsZero() {
+        let a: [Float] = [1, 0, 0, 0]
+        let b: [Float] = [0, 1, 0, 0]
+        XCTAssertEqual(VectorMath.cosineSimilarity(a, b), 0.0, accuracy: 1e-6)
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    func testCosineSimilarity_oppositeVectors_returnsMinusOne() {
+        let a: [Float] = [1, 2, 3]
+        let b: [Float] = [-1, -2, -3]
+        XCTAssertEqual(VectorMath.cosineSimilarity(a, b), -1.0, accuracy: 1e-6)
     }
 
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
+    func testCosineSimilarity_scaleInvariant() {
+        // Cosine similarity ignores magnitude — only direction matters.
+        let a: [Float] = [1, 2, 3]
+        let b: [Float] = [10, 20, 30]
+        XCTAssertEqual(VectorMath.cosineSimilarity(a, b), 1.0, accuracy: 1e-6)
     }
 
+    func testCosineSimilarity_zeroVector_returnsZero() {
+        let a: [Float] = [0, 0, 0, 0]
+        let b: [Float] = [1, 2, 3, 4]
+        XCTAssertEqual(VectorMath.cosineSimilarity(a, b), 0.0, accuracy: 1e-6)
+    }
+
+    func testCosineSimilarity_384Dimensions_matchesEmbeddingShape() {
+        // Smoke test at the actual 384-dim shape used by the MiniLM embeddings.
+        let a = Array(repeating: Float(1.0), count: 384)
+        let b = Array(repeating: Float(1.0), count: 384)
+        XCTAssertEqual(VectorMath.cosineSimilarity(a, b), 1.0, accuracy: 1e-5)
+    }
 }
