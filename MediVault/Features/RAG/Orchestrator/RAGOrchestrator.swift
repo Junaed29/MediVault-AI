@@ -50,17 +50,24 @@ class RAGOrchestrator {
             currentStep = .idle
         }
 
+        var metrics = PerformanceMetrics()
+        let tStart = CFAbsoluteTimeGetCurrent()
+
         currentStep = .embedding
         progress = 0.2
+        let tEmbedStart = CFAbsoluteTimeGetCurrent()
         let queryEmbedding = try await embeddingService.embed(text: userQuery)
+        metrics.embeddingTime = CFAbsoluteTimeGetCurrent() - tEmbedStart
 
         currentStep = .retrieving
         progress = 0.4
+        let tRetrieveStart = CFAbsoluteTimeGetCurrent()
         let retrieved = try await vectorStore.findSimilar(
             queryEmbedding: queryEmbedding,
             limit: 3,
             threshold: 0.5
         )
+        metrics.retrievalTime = CFAbsoluteTimeGetCurrent() - tRetrieveStart
 
         guard !retrieved.isEmpty else {
             throw RAGError.noRelevantDocuments
@@ -74,16 +81,21 @@ class RAGOrchestrator {
         progress = 0.6
         let systemPrompt = PromptBuilder.systemPrompt()
         let userPrompt = PromptBuilder.userPrompt(context: context, query: userQuery)
+        let tGenStart = CFAbsoluteTimeGetCurrent()
         let result = try await llmService.generate(
             systemPrompt: systemPrompt, userPrompt: userPrompt)
+        metrics.generationTime = CFAbsoluteTimeGetCurrent() - tGenStart
         let answer = result.answer
 
         currentStep = .validating
         progress = 0.9
+        let tValidateStart = CFAbsoluteTimeGetCurrent()
         let groundingResult = groundingValidator.validate(answer: answer, context: context)
+        metrics.validationTime = CFAbsoluteTimeGetCurrent() - tValidateStart
 
         currentStep = .complete
         progress = 1.0
+        metrics.totalTime = CFAbsoluteTimeGetCurrent() - tStart
 
         return RAGResponse(
             answer: answer,
@@ -91,7 +103,7 @@ class RAGOrchestrator {
             scores: scores,
             citedSourceIndices: result.sources,
             groundingResult: groundingResult,
-            metrics: PerformanceMetrics()
+            metrics: metrics
         )
     }
 
@@ -107,17 +119,24 @@ class RAGOrchestrator {
             currentStep = .idle
         }
 
+        var metrics = PerformanceMetrics()
+        let tStart = CFAbsoluteTimeGetCurrent()
+
         currentStep = .embedding
         progress = 0.2
+        let tEmbedStart = CFAbsoluteTimeGetCurrent()
         let queryEmbedding = try await embeddingService.embed(text: userQuery)
+        metrics.embeddingTime = CFAbsoluteTimeGetCurrent() - tEmbedStart
 
         currentStep = .retrieving
         progress = 0.4
+        let tRetrieveStart = CFAbsoluteTimeGetCurrent()
         let retrieved = try await vectorStore.findSimilar(
             queryEmbedding: queryEmbedding,
             limit: 3,
             threshold: 0.5
         )
+        metrics.retrievalTime = CFAbsoluteTimeGetCurrent() - tRetrieveStart
 
         guard !retrieved.isEmpty else {
             throw RAGError.noRelevantDocuments
@@ -132,20 +151,24 @@ class RAGOrchestrator {
         let systemPrompt = PromptBuilder.systemPrompt()
         let userPrompt = PromptBuilder.userPrompt(context: context, query: userQuery)
 
-        // Use history-aware generation
+        let tGenStart = CFAbsoluteTimeGetCurrent()
         let result = try await llmService.generateWithHistory(
             systemPrompt: systemPrompt,
             conversationHistory: conversationHistory,
             currentUserPrompt: userPrompt
         )
+        metrics.generationTime = CFAbsoluteTimeGetCurrent() - tGenStart
         let answer = result.answer
 
         currentStep = .validating
         progress = 0.9
+        let tValidateStart = CFAbsoluteTimeGetCurrent()
         let groundingResult = groundingValidator.validate(answer: answer, context: context)
+        metrics.validationTime = CFAbsoluteTimeGetCurrent() - tValidateStart
 
         currentStep = .complete
         progress = 1.0
+        metrics.totalTime = CFAbsoluteTimeGetCurrent() - tStart
 
         return RAGResponse(
             answer: answer,
@@ -153,7 +176,7 @@ class RAGOrchestrator {
             scores: scores,
             citedSourceIndices: result.sources,
             groundingResult: groundingResult,
-            metrics: PerformanceMetrics()
+            metrics: metrics
         )
     }
 
