@@ -220,8 +220,101 @@ struct SettingsTab: View {
                         Text("Local-only processing")
                     }
                 }
+
+                Section("Developer") {
+                    NavigationLink("Run Benchmark") {
+                        BenchmarkView()
+                    }
+                }
             }
             .navigationTitle("Settings")
+        }
+    }
+}
+
+struct BenchmarkView: View {
+    @State private var results: [Phi4MiniService.BenchmarkResult] = []
+    @State private var isRunning = false
+    @State private var median: Double = 0
+    @State private var exportPath: String?
+
+    var body: some View {
+        List {
+            if isRunning {
+                HStack {
+                    ProgressView()
+                    Text("Running 5 prompts…")
+                }
+            }
+
+            if !results.isEmpty {
+                Section("Median: \(String(format: "%.2f", median)) tok/s") {
+                    ForEach(results, id: \.label) { r in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(r.label).font(.headline)
+                            Text("\(r.tokenCount) tok in \(String(format: "%.2f", r.decodeSeconds))s → \(String(format: "%.2f", r.tokensPerSecond)) tok/s")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("prefill \(String(format: "%.2f", r.prefillSeconds))s · out \(r.outputChars) chars")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+
+                Section {
+                    Button("Export Markdown") { exportMarkdown() }
+                    if let path = exportPath {
+                        Text(path)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
+                }
+            }
+
+            Button(isRunning ? "Running…" : "Run Benchmark") {
+                Task { await run() }
+            }
+            .disabled(isRunning)
+        }
+        .navigationTitle("Benchmark")
+    }
+
+    private func run() async {
+        isRunning = true
+        defer { isRunning = false }
+        do {
+            let service = Phi4MiniService()
+            try await service.loadModel()
+            let r = try await service.benchmarkSuite()
+            results = r
+            let sorted = r.map(\.tokensPerSecond).sorted()
+            median = sorted.isEmpty ? 0 : sorted[sorted.count / 2]
+            await service.unloadModel()
+        } catch {
+            print("Benchmark failed:", error)
+        }
+    }
+
+    private func exportMarkdown() {
+        var md = "# MediVault Benchmark\n\n"
+        md += "Qwen 2.5-1.5B-Instruct Q4_K_M via SwiftLlama streaming · Metal backend · batch 256 · ctx 4096\n\n"
+        md += "| Case | Tokens | Decode (s) | tok/s | Prefill (s) |\n"
+        md += "|---|---:|---:|---:|---:|\n"
+        for r in results {
+            md += "| \(r.label) | \(r.tokenCount) | \(String(format: "%.2f", r.decodeSeconds)) | \(String(format: "%.2f", r.tokensPerSecond)) | \(String(format: "%.2f", r.prefillSeconds)) |\n"
+        }
+        md += "\n**Median: \(String(format: "%.2f", median)) tok/s**\n"
+
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("benchmark.md")
+        do {
+            try md.write(to: url, atomically: true, encoding: .utf8)
+            exportPath = url.path
+            print("Wrote benchmark to:", url.path)
+        } catch {
+            exportPath = "Export failed: \(error.localizedDescription)"
         }
     }
 }
